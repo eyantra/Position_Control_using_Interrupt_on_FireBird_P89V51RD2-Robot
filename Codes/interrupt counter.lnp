@@ -1,0 +1,3 @@
+"main.obj" 
+TO "interrupt counter" 
+RAMSIZE(256) 

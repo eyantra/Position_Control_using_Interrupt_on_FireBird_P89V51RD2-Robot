@@ -1,0 +1,112 @@
+C51 COMPILER V8.08   MAIN                                                                  09/08/2010 10:34:04 PAGE 1   
+
+
+C51 COMPILER V8.08, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /***************************************************************************************************
+   2          
+   3          This programme counts pulses from the left shaft encoder, compares it with required distance value and tak
+             -es appropriate action
+   4          
+   5          *****************************************************************************************************/
+   6          
+   7          #include <intrins.h>
+   8          #include "p89v51rx2.H"
+   9          
+  10          //program specific declarations
+  11          sbit LB=P1^0;       //LEFT BACK Pin.
+  12          sbit LF=P1^1;           //LEFT FRONT Pin.
+  13          sbit RF=P1^2;           //RIGHT FRONT Pin.
+  14          sbit RB=P3^4;           //RIGHT BACK Pin.
+  15          
+  16          sbit left_velocity=P1^3;  //Left velocity control pin. 
+  17          sbit right_velocity=P1^4; //Right velocity control pin. 
+  18          
+  19          unsigned int left_shaft_count=0;//initialize a variable to store the count pulses of the left position enc
+             -oder.
+  20          
+  21          //initialization routine for Interrupt 1 setup.
+  22          void int1_setup() //Initalisation of the Int 1 should be done in the same sequence as given in this functi
+             -on.
+  23          {
+  24   1      TCON = 0x04; //Set Interrupt 1 trigger type to falling edge trigger.
+  25   1      IEN0 = 0x84; //External Interrupt 1 Enable and Global Interrupt Enable. 
+  26   1      
+  27   1      P3 = 0x08; //set P3.3 (INT 1) as input port.
+  28   1                         // Can also be written as INT1 = 0; (refer to p89v51rx2.H).
+  29   1      }
+  30          
+  31          
+  32          //ISR for external Interrupt 1
+  33          void int1_isr(void)interrupt 2     //ISR Routine for External Interrupt 1.
+  34                                                                             //Refer to chapter 4 in the software manual (table 4.1)for syntax explanation.
+  35          {
+  36   1       left_shaft_count++;//when the slotted disc passes through the encoder pulses will be generated,each pulse
+             - will generate an interrupt and the right shaft count value will be incremented.
+  37   1       IE1 = 0; // When interrupt is processed it is cleared automatically by the hardware  or it can also be cl
+             -eared by the software.
+  38   1                        // Clearing IE1 flag to 0.    
+  39   1      }
+  40          
+  41          // function for forward motion. 
+  42          void forward(void)
+  43          {
+  44   1      RF=1;
+  45   1      LF=1;
+  46   1      RB=0;
+  47   1      LB=0;
+  48   1      }
+  49          
+  50          // function to stop robot.
+C51 COMPILER V8.08   MAIN                                                                  09/08/2010 10:34:04 PAGE 2   
+
+  51          void stop(void)
+  52          {
+  53   1      RF=0;
+  54   1      LF=0;
+  55   1      RB=0;
+  56   1      LB=0;
+  57   1      }
+  58          
+  59          void main()
+  60          { 
+  61   1       unsigned int reqd_shaft_count_int=0;
+  62   1       unsigned int distance=0;
+  63   1      
+  64   1       distance=100;  //Enter here the distance to be travelled in mm.     
+  65   1       
+  66   1       reqd_shaft_count_int=(unsigned int)(distance * 100 / 544);  //This equation will calculate the count requ
+             -ired for distance to be travelled.
+  67   1       
+  68   1       int1_setup();//external linterrupt 1 initialization.
+  69   1                                              
+  70   1       left_velocity = 1;      //setting motor enable pines to 1
+  71   1       right_velocity = 1; //setting motor enable pines to 1
+  72   1       forward();       //go forward
+  73   1                                    
+  74   1       while(left_shaft_count<reqd_shaft_count_int); //wait till desired distance is covered.
+  75   1      
+  76   1       stop();         //stop motor                                           
+  77   1      
+  78   1       while(1);
+  79   1       
+  80   1      }//main ends                
+  81          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     84    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
